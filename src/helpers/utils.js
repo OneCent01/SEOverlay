@@ -177,11 +177,13 @@ export const selfCorrectingTimer = (options) => {
   }
 };
 
+export const getAvailableVoices = () => 
+  window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
 
 export const updateVoice = (sessionData, voiceName) => {
-  const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'))
-  const voice = voices.find(
-    v => v.name.toLowerCase() === voiceName.toLowerCase()
+  const lowerVoice  = voiceName.toLowerCase()
+  const voice = getAvailableVoices().find(
+    v => v.name.toLowerCase() === lowerVoice
   );
 
   if(voice) {
@@ -208,7 +210,6 @@ const startSpeaking = (sessionData) => {
       sessionData.tts.voicebox.voice = sessionData.tts.voice;
     }
     window.speechSynthesis.speak(sessionData.tts.voicebox);
-
   } catch(e) {}
 };
 
@@ -217,6 +218,20 @@ export const speak = (sessionData, text) => {
 
   if(!sessionData.tts.voicebox) {
     sessionData.tts.voicebox = new SpeechSynthesisUtterance();
+    sessionData.tts.voicebox.volume = sessionData.tts.volume;
     startSpeaking(sessionData);
   }
+};
+
+export const loadAvailableVoicesDisplay = () => {
+  const voicesElement = document.getElementById('voices');
+  while(voicesElement.firstChild) {
+    voicesElement.removeChild(voicesElement.firstChild);
+  };
+  const voices = getAvailableVoices();
+  voices.forEach(availableVoice => {
+    const voiceRow = document.createElement('div');
+    voiceRow.innerHTML = availableVoice.name;
+    voicesElement.appendChild(voiceRow);
+  });
 };

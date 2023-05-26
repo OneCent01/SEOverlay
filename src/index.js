@@ -7,6 +7,7 @@ import {
   selfCorrectingTimer,
   loadNewAudioSrc,
   playAudio,
+  loadAvailableVoicesDisplay,
 } from './helpers/utils.js';
 import {initSessionData} from './helpers/sessionState.js';
 import {loadDeleteCounters} from './helpers/deleteCounters.js';
@@ -26,6 +27,7 @@ const sessionData = initSessionData();
   if(ENABLED_FEATURES.tts) {
     loaders.push(loadTtsRedemptionEventIds(sessionData));
   }
+  loadAvailableVoicesDisplay();
 
   await Promise.all(loaders);
   

@@ -3,6 +3,7 @@ import {
 	KDAWG_ACCESS_TOKEN,
 } from '../keys.js';
 
+export const JENNA_USER_ID = '254125538';
 export const KDAWG_USER_ID = '221785400';
 export const LOCKCHAIN_USER_ID = '733084443';
 export const FATED_USER_ID = '184426448';
@@ -29,7 +30,12 @@ export const STREAMERS = {
 			delete_counter: true,
 			chat_lottery: true,
 		},
-		admins: [KDAWG_USER_ID, FATED_USER_ID, NIGHTBOT_USER_ID],
+		admins: [
+			KDAWG_USER_ID, 
+			FATED_USER_ID, 
+			NIGHTBOT_USER_ID, 
+			JENNA_USER_ID,
+		],
 	},
 	LOCKCHAIN: {
 		id: LOCKCHAIN_USER_ID,
@@ -39,7 +45,7 @@ export const STREAMERS = {
 	}
 };
 
-export const STREAMER = 'LOCKCHAIN';
+export const STREAMER = 'KDAWG';
 
 export const ACCESS_TOKEN = STREAMERS[STREAMER].token;
 export const ENABLED_FEATURES = STREAMERS[STREAMER].features;

@@ -11,6 +11,7 @@ import {
   getDeleteCounterByNickname,
   speak,
   updateVoice,
+  loadAvailableVoicesDisplay,
 } from '../helpers/utils.js';
 import {getUsers} from '../helpers/fetch.js';
 import {
@@ -49,7 +50,9 @@ export const handleMessageEvent = async (event, sessionData) => {
     sessionData.lottery.users.add(userId);
     lotteryCount.innerHTML = sessionData.lottery.users.size
   } 
-  if(ADMIN_USERS.includes(userId)) {
+
+  const isMod = tags?.mod === '1';
+  if(ADMIN_USERS.includes(userId) || isMod) {
     handleAdminMessage(text, sessionData);
   }
 
@@ -69,20 +72,20 @@ ADMIN WIDGET COMMANDS
 ---------------
 ** HYPE TRAIN **
 
-choo choo
+!chooChoo
 - forces a hype train to run 
 
 ------------------------
 ** DELETION COUNTERS **
 
-show [USER] coutner
-hide [USER] coutner
-flash [USER] coutner
+!showDeleteCounter USERNAME
+!hideDeleteCounter USERNAME
+!flashDeleteCounter USERNAME
 
-makedeletecounter [USERNAME] [NICKNAMES]
+!makeDeleteCounter USERNAME NICKNAME1,NICKNAME2
 - adds a counter that tracks the number of messages of theirs that have been deleted
 
-removedeletecounter [USERNAME]
+!removeDeleteCounter USERNAME/NICKNAME
 - removes a counter that was tracking a given user, if there was one.
 
 -------------------------
@@ -95,6 +98,17 @@ removedeletecounter [USERNAME]
 - user types this command to join the lottery pool
 - open to all users in chat while a lotto is open
 
+
+------------------------
+** TTS **
+
+!disabletts
+!enabletts
+!updateVoice VOICENAME
+!skiptts
+!showVoices
+!hideVoices
+!setVoiceVolume VOLUME
 */
 
 const handleAdminMessage = (message, sessionData) => {
@@ -122,17 +136,53 @@ const handleAdminMessage = (message, sessionData) => {
     case('!runLottery'):
       ENABLED_FEATURES.chat_lottery && handleRunLottery(sessionData, message);
       break;
-    case('!enableTts'):
+    case('!enabletts'):
       ENABLED_FEATURES.tts && setTtsEnabled(sessionData, true);
-    case('!disableTts'):
+      break;
+    case('!disabletts'):
       ENABLED_FEATURES.tts && setTtsEnabled(sessionData, false);
+      break;
     case('!updateVoice'):
       ENABLED_FEATURES.tts && updateVoice(sessionData, secondWord);
+      break;
     case('!skiptts'):
       ENABLED_FEATURES.tts && handleSkipTts();
+      break;
+    case('!showVoices'):
+      ENABLED_FEATURES.tts && handleShowVoices(sessionData);
+      break;
+    case('!hideVoices'):
+      ENABLED_FEATURES.tts && handleHideVoices(sessionData);
+      break;
+    case('!setVoiceVolume'):
+      ENABLED_FEATURES.tts && handleSetVoiceVolume(sessionData, secondWord);
+      break;
     default:
       break;
   }
+};
+
+const handleSetVoiceVolume = (sessionData, volume) => {
+  const newVolume = Number(volume.trim());
+  if(
+    typeof newVolume === 'number' && 
+    !isNaN(newVolume) && 
+    newVolume >= 0 && 
+    newVolume <= 1
+  ) {
+    sessionData.tts.volume = newVolume;
+  }
+}
+
+const voicesElement = document.getElementById('voices');
+
+const handleHideVoices = (sessionData) => {
+  voicesElement.classList.add('invisible')
+};
+
+const handleShowVoices = async (sessionData) => {
+  loadAvailableVoicesDisplay();
+  voicesElement.classList.remove('invisible')
 };
 
 const handleSkipTts = () => {

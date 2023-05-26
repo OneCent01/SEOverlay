@@ -1,5 +1,5 @@
 import {ENABLED_FEATURES} from './consts.js';
-
+import {getAvailableVoices} from './utils.js';
 
 export const initHypeTrainData = (startedAt=null) => ({
   events: {},
@@ -44,6 +44,7 @@ export const initSessionData = () => {
       queue: [],
       isEnabled: true,
       voice: null,
+      volume: 0.6,
     }
   };
   if(ENABLED_FEATURES.hype_train) {
