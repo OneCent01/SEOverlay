@@ -10,6 +10,15 @@ export const FATED_USER_ID = '184426448';
 export const MAV_USER_ID = '170166760';
 export const FATE_BOT_USER_ID = '904052148';
 export const NIGHTBOT_USER_ID = '19264788';
+export const KSOF_GAMER_YT_USER_ID = '768972758';
+export const KADRIUM_USER_ID = '684479679';
+export const BELLA_NOT_FOUND_USER_ID = '909721585';
+
+export const LOTTERY_BLACKLIST = new Set([
+	KSOF_GAMER_YT_USER_ID, 
+	KADRIUM_USER_ID, 
+	BELLA_NOT_FOUND_USER_ID
+]);
 
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = 60 * ONE_SECOND;
@@ -51,3 +60,33 @@ export const ACCESS_TOKEN = STREAMERS[STREAMER].token;
 export const ENABLED_FEATURES = STREAMERS[STREAMER].features;
 export const STREAMER_ID = STREAMERS[STREAMER].id;
 export const ADMIN_USERS = STREAMERS[STREAMER].admins;
+
+const SHOUT_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-DavisNeural"><s /><mstts:express-as style="shouting">${text}</mstts:express-as><s /></voice></speak>
+`;
+const ANGRY_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-DavisNeural"><s /><mstts:express-as style="angry">${text}</mstts:express-as><s /></voice></speak>
+`;
+const BRITISH_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-GB"><voice name="en-GB-RyanNeural"><mstts:express-as style="chat">${text}</mstts:express-as><s /> </voice></speak>
+`;
+
+export const SPEAKER_TEMPLATES = {
+	british: BRITISH_TEMPLATE,
+	american: text => `
+	    <speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
+	      name='en-US-ChristopherNeural'>
+	        ${text}
+	    </voice></speak>
+	`,
+	deep: text => `
+	    <speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
+	      name='en-US-DavisNeural'>
+	        ${text}
+	    </voice></speak>
+	`,
+	shout: SHOUT_TEMPLATE,
+	shouting: SHOUT_TEMPLATE,
+	angry: ANGRY_TEMPLATE,
+	mad: ANGRY_TEMPLATE,
+};

@@ -1,3 +1,4 @@
+import {fetchSpeech} from './fetch.js';
 const canvas = document.getElementById('game_board');
 const context = canvas?.getContext('2d');
 
@@ -177,61 +178,17 @@ export const selfCorrectingTimer = (options) => {
   }
 };
 
-export const getAvailableVoices = () => 
-  window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-
-export const updateVoice = (sessionData, voiceName) => {
-  const lowerVoice  = voiceName.toLowerCase()
-  const voice = getAvailableVoices().find(
-    v => v.name.toLowerCase() === lowerVoice
-  );
-
-  if(voice) {
-    sessionData.tts.voice = voice;
-  }
-};
-
-const startSpeaking = (sessionData) => {
-  try {
-    const handleEndEvent = () => {
-      sessionData.tts.voicebox.removeEventListener('end', handleEndEvent)
-      sessionData.tts.voicebox.removeEventListener('error', handleEndEvent)
-      if(sessionData.tts.queue.length) {
-        startSpeaking(sessionData);
-      } else {
-        sessionData.tts.voicebox = null;
-      }
-    }
-    sessionData.tts.voicebox.addEventListener('end', handleEndEvent)
-    sessionData.tts.voicebox.addEventListener('error', handleEndEvent)
-    const nextMessage = sessionData.tts.queue.shift();
-    sessionData.tts.voicebox.text = nextMessage;
-    if(sessionData.tts.voice) {
-      sessionData.tts.voicebox.voice = sessionData.tts.voice;
-    }
-    window.speechSynthesis.speak(sessionData.tts.voicebox);
-  } catch(e) {}
-};
-
-export const speak = (sessionData, text) => {
+export const speak = async (sessionData, text) => {
   sessionData.tts.queue.push(text);
 
-  if(!sessionData.tts.voicebox) {
-    sessionData.tts.voicebox = new SpeechSynthesisUtterance();
-    sessionData.tts.voicebox.volume = sessionData.tts.volume;
-    startSpeaking(sessionData);
-  }
-};
+  if(!sessionData.tts.isSpeaking) {
+    sessionData.tts.isSpeaking = true;
 
-export const loadAvailableVoicesDisplay = () => {
-  const voicesElement = document.getElementById('voices');
-  while(voicesElement.firstChild) {
-    voicesElement.removeChild(voicesElement.firstChild);
-  };
-  const voices = getAvailableVoices();
-  voices.forEach(availableVoice => {
-    const voiceRow = document.createElement('div');
-    voiceRow.innerHTML = availableVoice.name;
-    voicesElement.appendChild(voiceRow);
-  });
+    do {
+      const nextText = sessionData.tts.queue.shift();
+      await fetchSpeech(sessionData, nextText);
+    } while(sessionData.tts.queue.length);
+
+    sessionData.tts.isSpeaking = false;
+  }
 };

@@ -1,5 +1,5 @@
-import {STREAMER_ID, ACCESS_TOKEN} from './consts.js';
-import {APPLICATION_ID} from '../keys.js';
+import {STREAMER_ID, ACCESS_TOKEN, SPEAKER_TEMPLATES} from './consts.js';
+import {APPLICATION_ID, MICROSOFT_TTS_SUBSCRIPTION_KEY} from '../keys.js';
 
 const getRequestHeaders = () => new Headers({
   "Authorization": `Bearer ${ACCESS_TOKEN}`,
@@ -103,3 +103,71 @@ export const getUsers = async (sessionData, ids, usernames=[]) => {
     ...usersWithChatColor,
   ];
 };
+
+export const fetchSpeech = (sessionData, text) => new Promise(async (resolve) => {
+  const lowerText = text.toLowerCase();
+  const textVoice = Object.keys(SPEAKER_TEMPLATES).find(
+    voice => lowerText.startsWith(`${voice}::`)
+  );
+  const speakerTemplate = 
+    SPEAKER_TEMPLATES[textVoice] || 
+    SPEAKER_TEMPLATES[sessionData.tts.voice];
+  
+  const messageText = textVoice ? text.slice(textVoice.length) : text;
+  const requestBody = speakerTemplate(messageText);
+
+  const res = await fetch(
+    'https://southcentralus.tts.speech.microsoft.com/cognitiveservices/v1',
+    {
+      method: 'POST',
+      headers: new Headers({
+        "Content-Type": "application/ssml+xml",
+        "Ocp-Apim-Subscription-Key": MICROSOFT_TTS_SUBSCRIPTION_KEY,
+        "X-Microsoft-OutputFormat": "audio-16khz-128kbitrate-mono-mp3",
+      }),
+      body: requestBody,
+    }
+  );
+
+  const reader = res.body?.getReader();
+  if(!reader) {
+    return;
+  }
+
+  let isDone = false,
+    chunks = [],
+    bytes = 0;
+  do {
+    const {done, value} = await reader.read();
+    if(value) {
+      chunks.push(value);
+      bytes += value.length;
+    }
+    isDone = done;
+  } while(!isDone);
+
+  const buffer = new ArrayBuffer(bytes);
+  const audioBytes = new Uint8Array(buffer);
+  let offset = 0;
+  chunks.forEach(chunk => {
+    audioBytes.set(chunk, offset);
+    offset += chunk.length;
+  });
+
+  const audioBlob = new Blob([audioBytes], {type: 'audio/mp3'});
+  const audio = new Audio(URL.createObjectURL(audioBlob));
+  const handleEnded = () => {
+    audio.removeEventListener('ended', handleEnded);
+    sessionData.tts.skip = null;
+    resolve();
+  }
+  audio.addEventListener('ended', handleEnded);
+  sessionData.tts.skip = handleEnded;
+
+  try {
+    audio.play();
+  } catch(err) {
+    handleEnded();
+  }
+});
+

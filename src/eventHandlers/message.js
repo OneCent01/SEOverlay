@@ -3,6 +3,8 @@ import {
   ADMIN_USERS,
   JOIN_COMMANDS,
   ENABLED_FEATURES,
+  SPEAKER_TEMPLATES,
+  LOTTERY_BLACKLIST,
 } from '../helpers/consts.js';
 import {
   showCounter, 
@@ -10,7 +12,6 @@ import {
   flashCounter, 
   getDeleteCounterByNickname,
   speak,
-  updateVoice,
   loadAvailableVoicesDisplay,
 } from '../helpers/utils.js';
 import {getUsers} from '../helpers/fetch.js';
@@ -45,7 +46,8 @@ export const handleMessageEvent = async (event, sessionData) => {
   if(
     ENABLED_FEATURES.chat_lottery &&
     sessionData.lottery.isOpen && 
-    JOIN_COMMANDS.includes(lowerMessage)
+    JOIN_COMMANDS.includes(lowerMessage) && 
+    !LOTTERY_BLACKLIST.has(userId)
   ) {
     sessionData.lottery.users.add(userId);
     lotteryCount.innerHTML = sessionData.lottery.users.size
@@ -56,15 +58,15 @@ export const handleMessageEvent = async (event, sessionData) => {
     handleAdminMessage(text, sessionData);
   }
 
-  if(
-    ENABLED_FEATURES.tts &&
-    sessionData.tts.isEnabled && 
-    tags && 
-    tags['custom-reward-id'] && 
-    sessionData.tts.eventIds.includes(tags['custom-reward-id'])
-  ) {
-    speak(sessionData, text);
-  } 
+  speak(sessionData, text);
+  // if(
+  //   ENABLED_FEATURES.tts &&
+  //   sessionData.tts.isEnabled && 
+  //   tags && 
+  //   tags['custom-reward-id'] && 
+  //   sessionData.tts.eventIds.includes(tags['custom-reward-id'])
+  // ) {
+  // } 
 }
 
 /*
@@ -104,11 +106,9 @@ ADMIN WIDGET COMMANDS
 
 !disabletts
 !enabletts
-!updateVoice VOICENAME
 !skiptts
-!showVoices
-!hideVoices
 !setVoiceVolume VOLUME
+!updateVoice VOICE
 */
 
 const handleAdminMessage = (message, sessionData) => {
@@ -142,23 +142,24 @@ const handleAdminMessage = (message, sessionData) => {
     case('!disabletts'):
       ENABLED_FEATURES.tts && setTtsEnabled(sessionData, false);
       break;
-    case('!updateVoice'):
-      ENABLED_FEATURES.tts && updateVoice(sessionData, secondWord);
-      break;
     case('!skiptts'):
-      ENABLED_FEATURES.tts && handleSkipTts();
-      break;
-    case('!showVoices'):
-      ENABLED_FEATURES.tts && handleShowVoices(sessionData);
-      break;
-    case('!hideVoices'):
-      ENABLED_FEATURES.tts && handleHideVoices(sessionData);
+      ENABLED_FEATURES.tts && handleSkipTts(sessionData);
       break;
     case('!setVoiceVolume'):
       ENABLED_FEATURES.tts && handleSetVoiceVolume(sessionData, secondWord);
       break;
+    case('!updateVoice'):
+      ENABLED_FEATURES.tts && handleUpdateVoice(sessionData, secondWord);
+      break;
     default:
       break;
+  }
+};
+
+const handleUpdateVoice = (sessionData, voice) => {
+  const lowerVoice = voice.toLowerCase();
+  if(Boolean(SPEAKER_TEMPLATES[lowerVoice])) {
+    sessionData.tts.voice = lowerVoice;
   }
 };
 
@@ -174,20 +175,9 @@ const handleSetVoiceVolume = (sessionData, volume) => {
   }
 }
 
-const voicesElement = document.getElementById('voices');
-
-const handleHideVoices = (sessionData) => {
-  voicesElement.classList.add('invisible')
-};
-
-const handleShowVoices = async (sessionData) => {
-  loadAvailableVoicesDisplay();
-  voicesElement.classList.remove('invisible')
-};
-
-const handleSkipTts = () => {
-  if(speechSynthesis?.speaking) {
-    speechSynthesis.cancel();
+const handleSkipTts = (sessionData) => {
+  if(sessionData.tts.skip) {
+    sessionData.tts.skip();
   }
 };
 

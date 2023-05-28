@@ -2,20 +2,12 @@ import {handleMessageDeleteEvent, handleMessagesDeleteEvent} from './eventHandle
 import {handleSubscriptionEvent} from './eventHandlers/sub.js';
 import {handleTipEvent} from './eventHandlers/tip.js';
 import {handleMessageEvent} from './eventHandlers/message.js';
-import {
-  resizePage, 
-  selfCorrectingTimer,
-  loadNewAudioSrc,
-  playAudio,
-  loadAvailableVoicesDisplay,
-} from './helpers/utils.js';
+import {resizePage} from './helpers/utils.js';
 import {initSessionData} from './helpers/sessionState.js';
 import {loadDeleteCounters} from './helpers/deleteCounters.js';
-import {loadImages} from './helpers/loadImages.js';
-import {runTimer} from './helpers/timer.js';
+// import {loadImages} from './helpers/loadImages.js';
 import {loadTtsRedemptionEventIds} from './eventHandlers/redemption.js';
 import {ENABLED_FEATURES} from './helpers/consts.js';
-
 
 const sessionData = initSessionData();
 
@@ -27,7 +19,6 @@ const sessionData = initSessionData();
   if(ENABLED_FEATURES.tts) {
     loaders.push(loadTtsRedemptionEventIds(sessionData));
   }
-  loadAvailableVoicesDisplay();
 
   await Promise.all(loaders);
   

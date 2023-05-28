@@ -27,24 +27,19 @@ export const initSessionData = () => {
     deleteCounters: {},
     shownCounters: new Set(),
     lottery: initLotteryData(),
-    audio: {
-      isReady: false,
-      element: $("#audio"),
-      srcElement: $("#audioSource"),
-    },
     timer: {
       container: null,
       canvas: null,
       context: null,
     },
     tts: {
-      // voicebox is the SpeechUtterance instance
-      voicebox: null,
       eventIds: [],
       queue: [],
       isEnabled: true,
-      voice: null,
+      isSpeaking: false,
+      skip: null,
       volume: 0.6,
+      voice: 'american',
     }
   };
   if(ENABLED_FEATURES.hype_train) {
