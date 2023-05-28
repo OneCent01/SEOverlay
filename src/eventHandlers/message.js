@@ -58,15 +58,15 @@ export const handleMessageEvent = async (event, sessionData) => {
     handleAdminMessage(text, sessionData);
   }
 
-  speak(sessionData, text);
-  // if(
-  //   ENABLED_FEATURES.tts &&
-  //   sessionData.tts.isEnabled && 
-  //   tags && 
-  //   tags['custom-reward-id'] && 
-  //   sessionData.tts.eventIds.includes(tags['custom-reward-id'])
-  // ) {
-  // } 
+  if(
+    ENABLED_FEATURES.tts &&
+    sessionData.tts.isEnabled && 
+    tags && 
+    tags['custom-reward-id'] && 
+    sessionData.tts.eventIds.includes(tags['custom-reward-id'])
+  ) {
+    speak(sessionData, text);
+  } 
 }
 
 /*

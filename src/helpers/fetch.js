@@ -162,7 +162,10 @@ export const fetchSpeech = (sessionData, text) => new Promise(async (resolve) =>
     resolve();
   }
   audio.addEventListener('ended', handleEnded);
-  sessionData.tts.skip = handleEnded;
+  sessionData.tts.skip = () => {
+    audio.pause();
+    handleEnded();
+  };
 
   try {
     audio.play();
