@@ -27,6 +27,9 @@ const drawFuelTank = (context, x, y) => {
   context.bezierCurveTo(150 + x, 226 + y, 141 + x, 267 + y, 154 + x, 280 + y);
   context.closePath()
   context.fill();
+  context.fillStyle = 'black';
+  context.font = 'bold 42px serif';
+  context.fillText('KDawg', 162 + x, 264 + y);
   context.setTransform(1, 0, 0, 1, 0, 0);
 }
 

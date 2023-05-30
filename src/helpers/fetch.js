@@ -104,17 +104,41 @@ export const getUsers = async (sessionData, ids, usernames=[]) => {
   ];
 };
 
-export const fetchSpeech = (sessionData, text) => new Promise(async (resolve) => {
-  const lowerText = text.toLowerCase();
-  const textVoice = Object.keys(SPEAKER_TEMPLATES).find(
-    voice => lowerText.startsWith(`${voice}::`)
-  );
-  const speakerTemplate = 
-    SPEAKER_TEMPLATES[textVoice] || 
-    SPEAKER_TEMPLATES[sessionData.tts.voice];
-  
-  const messageText = textVoice ? text.slice(textVoice.length) : text;
-  const requestBody = speakerTemplate(messageText);
+export const fetchBrianSpeech = (sessionData, text) => new Promise(async (resolve) => {
+  const speak = await fetch('https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=' + encodeURIComponent(text.trim()));
+
+  if (speak.status != 200) {
+    resolve(false);
+    return;
+  }
+
+  const mp3 = await speak.blob();
+  const audioBlob = URL.createObjectURL(mp3);
+
+  const audio = new Audio(audioBlob);
+  let handleEndedEvent;
+  const handleEnded = (success) => {
+    audio.removeEventListener('ended', handleEndedEvent);
+    sessionData.tts.skip = null;
+    resolve(success);
+  }
+  handleEndedEvent = () => handleEnded(true);
+  audio.addEventListener('ended', handleEndedEvent);
+  sessionData.tts.skip = () => {
+    audio.pause();
+    handleEnded(true);
+  };
+
+  try {
+    audio.play();
+  } catch(err) {
+    handleEnded(false);
+  }
+});
+
+export const fetchMicrosoftSpeech = (sessionData, text, voice) => new Promise(async (resolve) => {
+  const speakerTemplate = SPEAKER_TEMPLATES[voice] || SPEAKER_TEMPLATES.american;
+  const requestBody = speakerTemplate(text);
 
   const res = await fetch(
     'https://southcentralus.tts.speech.microsoft.com/cognitiveservices/v1',
@@ -131,6 +155,7 @@ export const fetchSpeech = (sessionData, text) => new Promise(async (resolve) =>
 
   const reader = res.body?.getReader();
   if(!reader) {
+    resolve(false);
     return;
   }
 
@@ -156,21 +181,101 @@ export const fetchSpeech = (sessionData, text) => new Promise(async (resolve) =>
 
   const audioBlob = new Blob([audioBytes], {type: 'audio/mp3'});
   const audio = new Audio(URL.createObjectURL(audioBlob));
-  const handleEnded = () => {
-    audio.removeEventListener('ended', handleEnded);
+  let handleEndedEvent; 
+  const handleEnded = (success) => {
+    audio.removeEventListener('ended', handleEndedEvent);
     sessionData.tts.skip = null;
-    resolve();
+    resolve(success);
   }
-  audio.addEventListener('ended', handleEnded);
+  handleEndedEvent = () => {
+    handleEnded(true);
+  }
+  audio.addEventListener('ended', handleEndedEvent);
   sessionData.tts.skip = () => {
     audio.pause();
-    handleEnded();
+    handleEnded(true);
   };
 
   try {
     audio.play();
   } catch(err) {
-    handleEnded();
+    handleEnded(false);
   }
 });
+
+export const nativeSpeech = (sessionData, text) => new Promise(async (resolve) => {
+  const utterance = new SpeechSynthesisUtterance();
+  utterance.volume = 0.6;
+  utterance.text = text;
+
+  let handleEndedEvent;
+  const handleEnded = (success) => {
+    utterance.removeEventListener('end', handleEndedEvent);
+    sessionData.tts.skip = null;
+    resolve(success);
+  };
+
+  handleEndedEvent = () => handleEnded(true);
+  utterance.addEventListener('end', handleEndedEvent);
+
+  sessionData.tts.skip = () => {
+    if(speechSynthesis?.speaking) {
+      speechSynthesis.cancel();
+    }
+
+    handleEnded(true);
+  }
+
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch(err) {
+    handleEnded(false);
+  }
+});
+
+export const fetchSpeech = async (sessionData, text) => {
+  let speechText = text.slice();
+  const lowerText = text.toLowerCase();
+
+  let targetVoice = sessionData.tts.voice;
+  
+  if(lowerText.startsWith('brian::')) {
+    targetVoice = 'brian';
+    speechText = speechText.slice(targetVoice.length + 2);
+  } else {
+    const textVoice = Object.keys(SPEAKER_TEMPLATES).find(
+      voice => lowerText.startsWith(`${voice}::`)
+    );
+
+    if(textVoice) {
+      targetVoice = textVoice;
+      speechText = speechText.slice(targetVoice.length + 2);
+    }
+  }
+
+  const speechFallbackOrder = [];
+
+  if(targetVoice === 'brian') {
+    speechFallbackOrder.push(fetchBrianSpeech);
+    speechFallbackOrder.push(fetchMicrosoftSpeech);
+  } else {
+    speechFallbackOrder.push(fetchMicrosoftSpeech);
+    speechFallbackOrder.push(fetchBrianSpeech);
+  }
+
+  speechFallbackOrder.push(nativeSpeech);
+
+  let ttsComplete = false,
+    index = 0;
+
+  while(!ttsComplete) {
+    const speechFn = speechFallbackOrder[index];
+    if(speechFn) {
+      ttsComplete = await speechFn(sessionData, speechText, targetVoice)
+    } else {
+      ttsComplete = true;
+    }
+    index++;
+  }
+};
 

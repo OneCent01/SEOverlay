@@ -39,7 +39,7 @@ export const initSessionData = () => {
       isSpeaking: false,
       skip: null,
       volume: 0.6,
-      voice: 'american',
+      voice: 'brian',
     }
   };
   if(ENABLED_FEATURES.hype_train) {

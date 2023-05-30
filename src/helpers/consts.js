@@ -68,25 +68,60 @@ const ANGRY_TEMPLATE = text => `
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-DavisNeural"><s /><mstts:express-as style="angry">${text}</mstts:express-as><s /></voice></speak>
 `;
 const BRITISH_TEMPLATE = text => `
-<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-GB"><voice name="en-GB-RyanNeural"><mstts:express-as style="chat">${text}</mstts:express-as><s /> </voice></speak>
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-GB-RyanNeural"><mstts:express-as style="chat">${text}</mstts:express-as><s /> </voice></speak>
+`;
+const SWEDISH_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="sv-SE-MattiasNeural"><s />${text}</voice></speak>
+`;
+const FRENCH_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="fr-CA-JeanNeural"><s />${text}</voice></speak>
+`;
+const AMERICAN_TEMPLATE = text => `
+<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
+  name='en-US-ChristopherNeural'>
+    ${text}
+</voice></speak>
+`;
+const IRISH_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="ga-IE-ColmNeural">${text}</voice></speak>
+`;
+const NORWEGIAN_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="nb-NO-FinnNeural">${text}</voice></speak>
+`;
+const LITTLE_GIRL_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-AnaNeural">${text}</voice></speak>
+`;
+const MALE_ASMR_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-JasonNeural"><s /><mstts:express-as style="whispering">${text}</mstts:express-as><s /></voice></speak>
 `;
 
 export const SPEAKER_TEMPLATES = {
 	british: BRITISH_TEMPLATE,
-	american: text => `
-	    <speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
-	      name='en-US-ChristopherNeural'>
-	        ${text}
-	    </voice></speak>
-	`,
-	deep: text => `
-	    <speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
-	      name='en-US-DavisNeural'>
-	        ${text}
-	    </voice></speak>
-	`,
+	charles: BRITISH_TEMPLATE,
+
+	american: AMERICAN_TEMPLATE,
+	paul: AMERICAN_TEMPLATE,
+
+	swedish: SWEDISH_TEMPLATE,
+	felix: SWEDISH_TEMPLATE,
+
+	french: FRENCH_TEMPLATE,
+	pierre: FRENCH_TEMPLATE,
+
+	irish: IRISH_TEMPLATE,
+	murphy: IRISH_TEMPLATE,
+
+	norwegian: NORWEGIAN_TEMPLATE,
+	finn: NORWEGIAN_TEMPLATE,
+
 	shout: SHOUT_TEMPLATE,
-	shouting: SHOUT_TEMPLATE,
-	angry: ANGRY_TEMPLATE,
+	tim: SHOUT_TEMPLATE,
+
 	mad: ANGRY_TEMPLATE,
+	andy: ANGRY_TEMPLATE,
+
+	annie: LITTLE_GIRL_TEMPLATE,
+
+	asmr: MALE_ASMR_TEMPLATE,
+	ari: MALE_ASMR_TEMPLATE,
 };
