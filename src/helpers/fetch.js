@@ -1,5 +1,5 @@
-import {STREAMER_ID, ACCESS_TOKEN, SPEAKER_TEMPLATES} from './consts.js';
-import {APPLICATION_ID, MICROSOFT_TTS_SUBSCRIPTION_KEY} from '../keys.js';
+import {STREAMER_ID, ACCESS_TOKEN, SPEAKER_TEMPLATES, ELEVEN_LABS_VOICE_NAMES} from './consts.js';
+import {APPLICATION_ID, MICROSOFT_TTS_SUBSCRIPTION_KEY, ELEVEN_LABS_API_KEY} from '../keys.js';
 
 const getRequestHeaders = () => new Headers({
   "Authorization": `Bearer ${ACCESS_TOKEN}`,
@@ -136,6 +136,70 @@ export const fetchBrianSpeech = (sessionData, text) => new Promise(async (resolv
   }
 });
 
+export const fetchElevenLabsVoices = async () => {
+  const res = await fetch('https://api.elevenlabs.io/v1/voices', {
+    headers: new Headers({
+      accept: 'application/json',
+      'xi-api-key': ELEVEN_LABS_API_KEY,
+    })
+  })
+  return res.json()
+};
+
+export const fetchElevenLabsSpeech = (sessionData, text, voice) => new Promise(async (resolve) => {
+  const voiceId = sessionData.tts.elevenLabsVoices[voice.toLowerCase()];
+  if(!voiceId) {
+    resolve(false);
+    return;
+  }
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=0`, {
+    method: 'POST',
+    headers: new Headers({
+      Accept: 'audio/mpeg',
+      'xi-api-key': ELEVEN_LABS_API_KEY,
+      'Content-Type': 'application/json',
+    }),
+    body: JSON.stringify({
+      "text": text,
+      "model_id": "eleven_monolingual_v1",
+      "voice_settings": {
+        "stability": 0.1,
+        "similarity_boost": 0.85,
+      }
+    }),
+  });
+  if(!res.blob) {
+    resolve(false);
+    return;
+  }
+  const audioBlob = await res?.blob();
+  if(!audioBlob) {
+    resolve(false);
+    return;
+  }
+  const audio = new Audio(URL.createObjectURL(audioBlob));
+  let handleEndedEvent; 
+  const handleEnded = (success) => {
+    audio.removeEventListener('ended', handleEndedEvent);
+    sessionData.tts.skip = null;
+    resolve(success);
+  }
+  handleEndedEvent = () => {
+    handleEnded(true);
+  }
+  audio.addEventListener('ended', handleEndedEvent);
+  sessionData.tts.skip = () => {
+    audio.pause();
+    handleEnded(true);
+  };
+
+  try {
+    audio.play();
+  } catch(err) {
+    handleEnded(false);
+  }
+});
+
 export const fetchMicrosoftSpeech = (sessionData, text, voice) => new Promise(async (resolve) => {
   const speakerTemplate = SPEAKER_TEMPLATES[voice] || SPEAKER_TEMPLATES.american;
   const requestBody = speakerTemplate(text);
@@ -250,20 +314,37 @@ export const fetchSpeech = async (sessionData, text) => {
     if(textVoice) {
       targetVoice = textVoice;
       speechText = speechText.slice(targetVoice.length + 2);
+    } else {
+      const elevenLabsVoice = Object.keys(sessionData.tts.elevenLabsVoices).find(
+        voice => lowerText.startsWith(`${voice}::`)
+      );
+
+      if(elevenLabsVoice) {
+        targetVoice = elevenLabsVoice;
+        speechText = speechText.slice(targetVoice.length + 2);
+      }
     }
   }
 
   const speechFallbackOrder = [];
 
-  if(targetVoice === 'brian') {
+  if(ELEVEN_LABS_VOICE_NAMES.has(targetVoice)) {
+    speechFallbackOrder.push(fetchElevenLabsSpeech);
     speechFallbackOrder.push(fetchBrianSpeech);
     speechFallbackOrder.push(fetchMicrosoftSpeech);
+    speechFallbackOrder.push(nativeSpeech);
+  } else if(targetVoice === 'brian') {
+    speechFallbackOrder.push(fetchBrianSpeech);
+    speechFallbackOrder.push(fetchMicrosoftSpeech);
+    speechFallbackOrder.push(nativeSpeech);
+    speechFallbackOrder.push(fetchElevenLabsSpeech);
   } else {
     speechFallbackOrder.push(fetchMicrosoftSpeech);
     speechFallbackOrder.push(fetchBrianSpeech);
+    speechFallbackOrder.push(nativeSpeech);
+    speechFallbackOrder.push(fetchElevenLabsSpeech);
   }
 
-  speechFallbackOrder.push(nativeSpeech);
 
   let ttsComplete = false,
     index = 0;

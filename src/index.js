@@ -2,7 +2,7 @@ import {handleMessageDeleteEvent, handleMessagesDeleteEvent} from './eventHandle
 import {handleSubscriptionEvent} from './eventHandlers/sub.js';
 import {handleTipEvent} from './eventHandlers/tip.js';
 import {handleMessageEvent} from './eventHandlers/message.js';
-import {resizePage} from './helpers/utils.js';
+import {resizePage, loadElevenLabsVoices} from './helpers/utils.js';
 import {initSessionData} from './helpers/sessionState.js';
 import {loadDeleteCounters} from './helpers/deleteCounters.js';
 // import {loadImages} from './helpers/loadImages.js';
@@ -18,6 +18,7 @@ const sessionData = initSessionData();
   }
   if(ENABLED_FEATURES.tts) {
     loaders.push(loadTtsRedemptionEventIds(sessionData));
+    loaders.push(loadElevenLabsVoices(sessionData));
   }
 
   await Promise.all(loaders);

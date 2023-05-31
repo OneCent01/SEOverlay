@@ -13,11 +13,13 @@ export const NIGHTBOT_USER_ID = '19264788';
 export const KSOF_GAMER_YT_USER_ID = '768972758';
 export const KADRIUM_USER_ID = '684479679';
 export const BELLA_NOT_FOUND_USER_ID = '909721585';
+export const THECRAZY_TOAST_USER_ID = '486114148';
 
 export const LOTTERY_BLACKLIST = new Set([
 	KSOF_GAMER_YT_USER_ID, 
 	KADRIUM_USER_ID, 
-	BELLA_NOT_FOUND_USER_ID
+	BELLA_NOT_FOUND_USER_ID,
+	THECRAZY_TOAST_USER_ID,
 ]);
 
 export const ONE_SECOND = 1000;
@@ -73,9 +75,6 @@ const BRITISH_TEMPLATE = text => `
 const SWEDISH_TEMPLATE = text => `
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="sv-SE-MattiasNeural"><s />${text}</voice></speak>
 `;
-const FRENCH_TEMPLATE = text => `
-<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="fr-CA-JeanNeural"><s />${text}</voice></speak>
-`;
 const AMERICAN_TEMPLATE = text => `
 <speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Male'
   name='en-US-ChristopherNeural'>
@@ -83,16 +82,16 @@ const AMERICAN_TEMPLATE = text => `
 </voice></speak>
 `;
 const IRISH_TEMPLATE = text => `
-<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="ga-IE-ColmNeural">${text}</voice></speak>
-`;
-const NORWEGIAN_TEMPLATE = text => `
-<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="nb-NO-FinnNeural">${text}</voice></speak>
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-IE"><voice name="en-IE-ConnorNeural">${text}</voice></speak>
 `;
 const LITTLE_GIRL_TEMPLATE = text => `
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-AnaNeural">${text}</voice></speak>
 `;
 const MALE_ASMR_TEMPLATE = text => `
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-JasonNeural"><s /><mstts:express-as style="whispering">${text}</mstts:express-as><s /></voice></speak>
+`;
+const NEW_ZEALAND_TEMPLATE = text => `
+<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-NZ"><voice name="en-NZ-MitchellNeural"><prosody pitch="-10.00%">${text}</prosody></voice></speak>
 `;
 
 export const SPEAKER_TEMPLATES = {
@@ -105,14 +104,11 @@ export const SPEAKER_TEMPLATES = {
 	swedish: SWEDISH_TEMPLATE,
 	felix: SWEDISH_TEMPLATE,
 
-	french: FRENCH_TEMPLATE,
-	pierre: FRENCH_TEMPLATE,
-
 	irish: IRISH_TEMPLATE,
 	murphy: IRISH_TEMPLATE,
 
-	norwegian: NORWEGIAN_TEMPLATE,
-	finn: NORWEGIAN_TEMPLATE,
+	kiwi: NEW_ZEALAND_TEMPLATE,
+	oliver: NEW_ZEALAND_TEMPLATE,
 
 	shout: SHOUT_TEMPLATE,
 	tim: SHOUT_TEMPLATE,
@@ -125,3 +121,5 @@ export const SPEAKER_TEMPLATES = {
 	asmr: MALE_ASMR_TEMPLATE,
 	ari: MALE_ASMR_TEMPLATE,
 };
+
+export const ELEVEN_LABS_VOICE_NAMES = new Set(['biden']);

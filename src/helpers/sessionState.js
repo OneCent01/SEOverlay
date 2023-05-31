@@ -34,6 +34,7 @@ export const initSessionData = () => {
     },
     tts: {
       eventIds: [],
+      elevenLabsVoices: {},
       queue: [],
       isEnabled: true,
       isSpeaking: false,

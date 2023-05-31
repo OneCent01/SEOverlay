@@ -1,6 +1,17 @@
-import {fetchSpeech} from './fetch.js';
+import {fetchSpeech, fetchElevenLabsVoices} from './fetch.js';
+import {ELEVEN_LABS_VOICE_NAMES} from './consts.js';
 const canvas = document.getElementById('game_board');
 const context = canvas?.getContext('2d');
+
+export const loadElevenLabsVoices = async (sessionData) => {
+  const res = await fetchElevenLabsVoices();
+  res?.voices.forEach(voice => {
+    const lowerVoice = voice.name.toLowerCase();
+    if(ELEVEN_LABS_VOICE_NAMES.has(lowerVoice)) {
+      sessionData.tts.elevenLabsVoices[lowerVoice] = voice.voice_id;
+    }
+  });
+}
 
 export const resizePage = () => {
   canvas.height = window.innerHeight;
