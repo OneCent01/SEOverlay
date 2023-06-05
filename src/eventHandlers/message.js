@@ -6,19 +6,16 @@ import {
   SPEAKER_TEMPLATES,
   LOTTERY_BLACKLIST,
 } from '../helpers/consts.js';
+import {speak} from '../helpers/speak.js';
+import {getUsers} from '../helpers/fetch.js';
 import {
   showCounter, 
   hideCounter, 
   flashCounter, 
   getDeleteCounterByNickname,
-  speak,
-  loadAvailableVoicesDisplay,
-} from '../helpers/utils.js';
-import {getUsers} from '../helpers/fetch.js';
-import {
   initDeleteCounterData, 
   saveUserDeletionCounters, 
-  removeUserDeletionCounter
+  removeUserDeletionCounter,
 } from '../helpers/deleteCounters.js';
 import {runLottery} from '../helpers/lottery.js';
 import {updateHypeTrain} from '../helpers/updateHypeTrain.js';
@@ -58,15 +55,15 @@ export const handleMessageEvent = async (event, sessionData) => {
     handleAdminMessage(text, sessionData);
   }
 
-  if(
-    ENABLED_FEATURES.tts &&
-    sessionData.tts.isEnabled && 
-    tags && 
-    tags['custom-reward-id'] && 
-    sessionData.tts.eventIds.includes(tags['custom-reward-id'])
-  ) {
-    speak(sessionData, text);
-  } 
+  speak(sessionData, text, msgId, userId);
+  // if(
+  //   ENABLED_FEATURES.tts &&
+  //   sessionData.tts.isEnabled && 
+  //   tags && 
+  //   tags['custom-reward-id'] && 
+  //   sessionData.tts.eventIds.includes(tags['custom-reward-id'])
+  // ) {
+  // } 
 }
 
 /*
@@ -136,6 +133,9 @@ const handleAdminMessage = (message, sessionData) => {
     case('!runLottery'):
       ENABLED_FEATURES.chat_lottery && handleRunLottery(sessionData, message);
       break;
+    case('!stopLottery'):
+      ENABLED_FEATURES.chat_lottery && handleStopLottery(sessionData);
+      break;
     case('!enabletts'):
       ENABLED_FEATURES.tts && setTtsEnabled(sessionData, true);
       break;
@@ -151,8 +151,28 @@ const handleAdminMessage = (message, sessionData) => {
     case('!updateVoice'):
       ENABLED_FEATURES.tts && handleUpdateVoice(sessionData, secondWord);
       break;
+    case('!ttsSetDelay'):
+      ENABLED_FEATURES.tts && handleSetDelay(sessionData, secondWord);
+      break;
     default:
       break;
+  }
+};
+
+const handleStopLottery = (sessionData) => {
+  if(typeof sessionData.lottery.skip === 'function') {
+    sessionData.lottery.skip();
+  }
+};
+
+const handleSetDelay = (sessionData, delayString) => {
+  const newDelay = Number(delayString.trim());
+  if(
+    typeof newDelay === 'number' && 
+    !isNaN(newDelay) &&
+    newDelay >= 0
+  ) {
+    sessionData.tts.delay = newDelay;
   }
 };
 
@@ -178,6 +198,12 @@ const handleSetVoiceVolume = (sessionData, volume) => {
 const handleSkipTts = (sessionData) => {
   if(sessionData.tts.skip) {
     sessionData.tts.skip();
+  } else {
+    setTimeout(() => {
+      if(sessionData.tts.skip) {
+        sessionData.tts.skip();
+      } 
+    }, 0);
   }
 };
 

@@ -1,6 +1,6 @@
 import {drawDogOnMotorcycle} from './shapes/dogOnMotorcycle.js'
 import {drawDogOnCart} from './shapes/dogOnCart.js';
-import {clearBoard, getDefaultGameState} from './utils.js';
+import {clearBoard} from './utils.js';
 
 const canvas = document.getElementById('game_board');
 const context = canvas?.getContext('2d');
@@ -40,3 +40,8 @@ export const gameLoop = (sessionData, gameState=getDefaultGameState()) => {
     window.requestAnimationFrame(() => gameLoop(sessionData, gameState));
   }
 }
+
+const getDefaultGameState = () => ({
+  continue: true,
+  progress: 0,
+});

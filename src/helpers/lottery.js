@@ -1,25 +1,36 @@
 import {runTimer} from './timer.js';
 import {initLotteryData} from './sessionState.js';
+import {STREAMER} from './consts.js';
 
 const timerPromise = (sessionData, seconds) => new Promise((resolve) => {
 	runTimer(sessionData, {
 		seconds, 
-		onComplete: resolve
+		onComplete: resolve,
+		canvas: sessionData.lottery.timer.canvas
 	});
-})
+});
 
 let hideTimeout = null;
 
-export const runLottery = async (sessionData, seconds) => {
-	if(sessionData.lottery.isOpen) {
-		return;
-	}
+export const runLottery = async (sessionData, seconds) => new Promise(async (resolve) => {
+	let isSkipped = false;
 	sessionData.lottery = initLotteryData();
-	sessionData.timer.container.style.opacity = '1';
+	sessionData.lottery.timer.container.style.opacity = '1';
 	const runningLotteryContainer = document.getElementById('running_lottery');
 	const lotteryResultsContainer = document.getElementById('lottery_results');
-	const lotterResultsList = document.getElementById('lottery_winners_container')
+	const lotterResultsList = document.getElementById('lottery_winners_container');
 	
+	sessionData.lottery.skip = () => {
+		runningLotteryContainer.style.opacity = '0';
+		lotteryResultsContainer.style.opacity = '0';
+		sessionData.lottery.timer.container.style.opacity = '0';
+		sessionData.lottery.isOpen = false;
+		isSkipped = true;
+		sessionData.lottery.skip = null;
+		resolve();
+		return;
+	}
+
 	lotteryResultsContainer.style.opacity = '0';
 	runningLotteryContainer.style.display = 'block';
 	runningLotteryContainer.style.opacity = '1';
@@ -29,11 +40,15 @@ export const runLottery = async (sessionData, seconds) => {
 	let isDone = false;
 
 	while(!isDone) {
-		await timerPromise(sessionData, seconds)
+		await timerPromise(sessionData, seconds);
 		if(sessionData.lottery.users.size >= 4) {
 			isDone = true;
 		}
-	}
+		if(isSkipped) {
+			resolve();
+			return;
+		}
+	};
 	// there's 4 or more users in the lottery, select them NOW!!
 	const usersInPool = sessionData.lottery.users.size;
 	while(sessionData.lottery.winners.length < Math.min(4, usersInPool)) {
@@ -54,7 +69,13 @@ export const runLottery = async (sessionData, seconds) => {
 	lotteryResultsContainer.style.opacity = '1';
 
 	hideTimeout = setTimeout(() => {
-		sessionData.timer.container.style.opacity = '0';
+		if(isSkipped) {
+			resolve();
+			return;
+		}
+		sessionData.lottery.timer.container.style.opacity = '0';
 		sessionData.lottery.isOpen = false;
-	}, 10000);
-}
+		sessionData.lottery.skip = null;
+		resolve();
+	}, 20000);
+});

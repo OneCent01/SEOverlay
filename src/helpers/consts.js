@@ -1,11 +1,13 @@
 import {
 	LOCKCHAIN_ACCESS_TOKEN,
 	KDAWG_ACCESS_TOKEN,
+	ZULII_ACCESS_TOKEN,
 } from '../keys.js';
 
 export const JENNA_USER_ID = '254125538';
 export const KDAWG_USER_ID = '221785400';
 export const LOCKCHAIN_USER_ID = '733084443';
+export const ZULII_USER_ID = '238086975';
 export const FATED_USER_ID = '184426448';
 export const MAV_USER_ID = '170166760';
 export const FATE_BOT_USER_ID = '904052148';
@@ -53,6 +55,12 @@ export const STREAMERS = {
 		token: LOCKCHAIN_ACCESS_TOKEN,
 		features: {tts: true},
 		admins: [LOCKCHAIN_USER_ID, FATED_USER_ID, NIGHTBOT_USER_ID],
+	},
+	ZULII: {
+		id: ZULII_USER_ID,
+		token: ZULII_ACCESS_TOKEN,
+		features: {tts: true, chat_lottery: true},
+		admins: [ZULII_USER_ID, FATED_USER_ID, NIGHTBOT_USER_ID]
 	}
 };
 
@@ -122,4 +130,4 @@ export const SPEAKER_TEMPLATES = {
 	ari: MALE_ASMR_TEMPLATE,
 };
 
-export const ELEVEN_LABS_VOICE_NAMES = new Set(['biden']);
+export const ELEVEN_LABS_VOICE_NAMES = new Set(['biden', 'ranger']);

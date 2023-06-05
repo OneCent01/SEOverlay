@@ -2,16 +2,20 @@ import {handleMessageDeleteEvent, handleMessagesDeleteEvent} from './eventHandle
 import {handleSubscriptionEvent} from './eventHandlers/sub.js';
 import {handleTipEvent} from './eventHandlers/tip.js';
 import {handleMessageEvent} from './eventHandlers/message.js';
-import {resizePage, loadElevenLabsVoices} from './helpers/utils.js';
+import {resizePage} from './helpers/utils.js';
+import {loadElevenLabsVoices} from './helpers/speak.js';
 import {initSessionData} from './helpers/sessionState.js';
 import {loadDeleteCounters} from './helpers/deleteCounters.js';
 // import {loadImages} from './helpers/loadImages.js';
 import {loadTtsRedemptionEventIds} from './eventHandlers/redemption.js';
-import {ENABLED_FEATURES} from './helpers/consts.js';
+import {ENABLED_FEATURES, STREAMER} from './helpers/consts.js';
 
 const sessionData = initSessionData();
 
 (async () => {
+  if(STREAMER === 'ZULII') {
+    document.getElementById('lotter_timer_title').innerHTML = 'Marbles Raffle'
+  }
   const loaders = [];
   if(ENABLED_FEATURES.delete_counter) {
     loaders.push(loadDeleteCounters(sessionData));

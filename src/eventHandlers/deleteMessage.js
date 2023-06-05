@@ -1,7 +1,24 @@
-import {incrementUserDeletionCounter, updateUserDeletionConter} from '../helpers/deleteCounters.js';
+import {
+  incrementUserDeletionCounter, 
+  updateUserDeletionConter
+} from '../helpers/deleteCounters.js';
+import {pick} from 'lodash';
 
 export const handleMessageDeleteEvent = (event, sessionData) => {
   const {msgId} = event;
+
+  if(
+    sessionData.tts.currentMsgId === msgId && 
+    typeof sessionData.tts.skip === 'function'
+  ) {
+    sessionData.tts.skip();
+  } else if(sessionData.tts.msgIdToTextMap[msgId]) {
+    sessionData.tts.queue = sessionData.tts.queue.filter(id => id !== msgId);
+    sessionData.tts.msgIdToTextMap = pick(
+      sessionData.tts.msgIdToTextMap,
+      sessionData.tts.queue,
+    );
+  }
 
   Object.entries(sessionData.deleteCounters).map(([userId, deleteCounterData]) => {
     if(deleteCounterData.messageIds[msgId]) {
@@ -21,12 +38,35 @@ export const handleMessageDeleteEvent = (event, sessionData) => {
 export const handleMessagesDeleteEvent = (event, sessionData) => {
   const {userId} = event;
 
-  const userDeleteCounterData = sessionData.deleteCounters[userId];
-  if(!userDeleteCounterData) {
-    return;
+  if(sessionData.tts.userMsgIds[userId]) {
+    sessionData.tts.userMsgIds[userId].forEach(msgId => {
+      if(
+        sessionData.tts.currentMsgId === msgId && 
+        typeof sessionData.tts.skip === 'function'
+      ) {
+        sessionData.tts.skip();
+      } else if(sessionData.tts.msgIdToTextMap[msgId]) {
+        sessionData.tts.queue = sessionData.tts.queue.filter(id => id !== msgId);
+        sessionData.tts.msgIdToTextMap = pick(
+          sessionData.tts.msgIdToTextMap,
+          sessionData.tts.queue,
+        );
+      }
+    });
   }
-  const deletedMessagesCount = userDeleteCounterData.deletedMessages + Object.values(userDeleteCounterData.messageIds).length;
-  updateUserDeletionConter(sessionData, userId, deletedMessagesCount)
 
-  sessionData.deleteCounters[userId].messageIds = {};
+  const userDeleteCounterData = sessionData.deleteCounters[userId];
+
+  if(userDeleteCounterData) {
+    const deletedMessagesCount = (
+      userDeleteCounterData.deletedMessages + 
+      Object.values(userDeleteCounterData.messageIds).length
+    );
+
+    updateUserDeletionConter(sessionData, userId, deletedMessagesCount)
+
+    sessionData.deleteCounters[userId].messageIds = {};
+  }
+
+
 }

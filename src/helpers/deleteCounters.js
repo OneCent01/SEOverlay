@@ -1,7 +1,6 @@
 import {getUsers} from './fetch.js';
 import {MAV_USER_ID} from './consts.js';
 import {SE_API_COUNTER_KEY} from '../keys.js';
-import {showCounter, getDeleteCounterByNickname, hideCounter} from './utils.js';
 
 export const initDeleteCounterData = async (sessionData, userId, nicknames, count=0) => {
   let user = sessionData.users[userId]
@@ -119,4 +118,49 @@ export const updateUserDeletionConter = (sessionData, userId, count) => {
 export const incrementUserDeletionCounter = (sessionData, userId) => {
   const newCount = sessionData.deleteCounters[userId].deletedMessages + 1;
   return updateUserDeletionConter(sessionData, userId, newCount);
+};
+
+const updateCounterPositions = (sessionData, counter) => {
+  let totalOffsetHeight = 0;
+  [...sessionData.shownCounters].forEach((_counter, i) => {
+    const offsetTop = 10 + (_counter.clientHeight + 10) * i;
+    _counter.style.top = `${offsetTop}px`;
+    totalOffsetHeight += (_counter.clientHeight + 10);
+  });
+  sessionData.lottery.timer.container.style.top = `${totalOffsetHeight + 10}px`;
+};
+
+export const hideCounter = (sessionData, counter) => {
+  if(!sessionData.shownCounters.has(counter)) {
+    return;
+  }
+  sessionData.shownCounters.delete(counter);
+  counter.style.top = `-${(counter.clientHeight) + 10}px`;
+  updateCounterPositions(sessionData, counter);
+};
+
+export const showCounter = (sessionData, counter) => {
+  sessionData.shownCounters.add(counter);
+  updateCounterPositions(sessionData, counter);
+};
+
+export const flashCounter = (sessionData, counter) => {
+  showCounter(sessionData, counter);
+  setTimeout(() => hideCounter(sessionData, counter), 6000);
+};
+
+export const getDeleteCounterByNickname = (sessionData, nickname) => {
+  const [userId, counter] = Object.entries(sessionData.deleteCounters).find(([userId, counter]) => {
+    const nicknames = [...counter.nicknames]
+    const user = sessionData.users[userId];
+    if(user?.display_name) {
+      nicknames.push(user.display_name);
+    }
+    if(nicknames.includes(nickname)) {
+      return true;
+    }
+    return false;
+  }) || [];
+
+  return counter;
 }
