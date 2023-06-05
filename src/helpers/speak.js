@@ -46,42 +46,12 @@ export const sanitizeSpeechText = text => {
 					finalString += letter;
 				}
 			} else {
-				// check to see if the previous three letters are the same.
-				// if they are, ignore this letter. 
-				const lastThreeCharsMatchCurrent = (
-					lastCharacter === letter &&
-					secondToLastCharacter === letter &&
-					thirdToLastCharacter === letter
-				);
-
-				if(!lastThreeCharsMatchCurrent) {
-					finalString += letter;
-				}
+				finalString += letter;
 			}
 		}
 	});
 
-	finalString = finalString.trim()
-	
-	const finalStringWords = [];
-
-	// next split by space and check to see if the same word is repeated in a spamming manner
-	finalString.split(' ').forEach(word => {
-		const lastWord = finalStringWords[finalStringWords.length - 1];
-		const secondToLastWord = finalStringWords[finalStringWords.length - 2];
-		const thirdToLastWord = finalStringWords[finalStringWords.length - 3];
-		const lastThreeWordsMatch = (
-			word === lastWord &&
-			word === secondToLastWord &&
-			word === thirdToLastWord
-		);
-
-		if(!lastThreeWordsMatch) {
-			finalStringWords.push(word);
-		}
-	});
-
-	return finalStringWords.join(' ');
+	return finalString.trim();
 };
 
 export const nativeSpeech = (sessionData, text) => new Promise(async (resolve) => {

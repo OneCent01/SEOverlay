@@ -66,10 +66,12 @@ export const STREAMERS = {
 
 export const STREAMER = 'KDAWG';
 
-export const ACCESS_TOKEN = STREAMERS[STREAMER].token;
-export const ENABLED_FEATURES = STREAMERS[STREAMER].features;
-export const STREAMER_ID = STREAMERS[STREAMER].id;
-export const ADMIN_USERS = STREAMERS[STREAMER].admins;
+const {token, features, id, admins} = STREAMERS[STREAMER];
+
+export const ACCESS_TOKEN = token;
+export const ENABLED_FEATURES = features;
+export const STREAMER_ID = id;
+export const ADMIN_USERS = admins;
 
 const SHOUT_TEMPLATE = text => `
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="en-US-DavisNeural"><s /><mstts:express-as style="shouting">${text}</mstts:express-as><s /></voice></speak>
