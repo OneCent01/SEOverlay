@@ -3,8 +3,16 @@ import {
 	fetchBrianSpeech,
 	fetchElevenLabsSpeech,
 	fetchMicrosoftSpeech,
+	fetchUberduckSpeech,
+	fetchAvailableCredits,
 } from './fetch.js';
-import {SPEAKER_TEMPLATES, ELEVEN_LABS_VOICE_NAMES} from './consts.js';
+import {
+	MICROSOFT_SPEAKER_TEMPLATES, 
+	ELEVEN_LABS_VOICE_NAMES, 
+	UBERDUCK_VOICES,
+	STREAMER_ID,
+	PROXY_URL,
+} from './consts.js';
 import {runTimer} from './timer.js';
 import {pick} from 'lodash';
 
@@ -14,7 +22,7 @@ export const sanitizeSpeechText = text => {
 	// first split each letter up to get rid of excessive puntuation and repeated characters
 	text.split('').forEach(letter => {
 		if(!finalString.length) {
-			// Only add if it's a letter and not a punctionation mark of whitespace
+			// Only add if it's a letter and not a punctionation mark or whitespace
 			if(!(/(\p{P}|\s)/u.test(letter))) {
 				finalString += letter;
 			}
@@ -23,25 +31,20 @@ export const sanitizeSpeechText = text => {
 			const secondToLastCharacter = finalString[finalString.length - 2];
 			const thirdToLastCharacter = finalString[finalString.length - 3];
 			if(/\p{P}/u.test(lastCharacter)) {
-				// if the last character was punctionation, don't allow more punctuation. 
-				if(!(/\p{P}/u.test(letter))) {
-					// if it's not punctuation, check if it's a space. 
-					// If it's not, add a space.
-					if(!(/(\s)/u.test(secondToLastCharacter))) {
-						finalString += ' ';
-					}
+				// if the last three characters were punctionation, don't allow more. 
+				const isForthPunctuation = (
+					/\p{P}/u.test(secondToLastCharacter) && 
+					/\p{P}/u.test(thirdToLastCharacter) &&
+					/\p{P}/u.test(letter)
+				);
+
+				if(!isForthPunctuation) {
 					finalString += letter;
 				}
 			} else if (/\s/.test(lastCharacter)) {
-				// if the last letter was a space and the current character is puncation
-				if((/\p{P}/u.test(letter))) {
-					// check to see if the chatacter before the space is a letter.
-					if(!(/(\p{P}|\s)/u.test(secondToLastCharacter))) {
-						// if it was, replace the space with the punctionation.
-					}
-					// otherwise, ignore it. 
-				} else if(!(/\s/.test(letter))) {
-					// otherwise, check if it's a not whitespace character.
+				// last character was a space so only add non-space chatacters now
+				if(!(/\s/.test(letter))) {
+					// check if it's a not whitespace character.
 					// this means it's a letter. Allow it!
 					finalString += letter;
 				}
@@ -92,69 +95,98 @@ export const fetchSpeech = async (sessionData, text) => {
 	let speechText = text.slice();
 	const lowerText = text.toLowerCase();
 	
-	let targetVoice = sessionData.tts.voice;
+	let targetVoice = null;
 
-	
+	// check if it's the brian voice
 	if(lowerText.startsWith('brian::')) {
 		targetVoice = 'brian';
-		speechText = speechText.slice(targetVoice.length + 2);
-	} else {
-		const textVoice = Object.keys(SPEAKER_TEMPLATES).find(
+	} 
+
+	// check if it's the microsoft voices
+	if(!targetVoice) {
+		const msVoice = Object.keys(MICROSOFT_SPEAKER_TEMPLATES).find(
 			voice => lowerText.startsWith(`${voice}::`)
 		);
 		
-		if(textVoice) {
-			targetVoice = textVoice;
-			speechText = speechText.slice(targetVoice.length + 2);
-		} else {
-			const elevenLabsVoice = Object.keys(sessionData.tts.elevenLabsVoices).find(
-				voice => lowerText.startsWith(`${voice}::`)
-			);
-			
-			if(elevenLabsVoice) {
-				targetVoice = elevenLabsVoice;
-				speechText = speechText.slice(targetVoice.length + 2);
-			}
+		if(msVoice) {
+			targetVoice = msVoice;
+		} 
+	}
+
+	// check to see if it's one of the elevenlab voices
+	if(!targetVoice) {
+		const elevenLabsVoice = Object.keys(sessionData.tts.elevenLabsVoices).find(
+			voice => lowerText.startsWith(`${voice}::`)
+		);
+		
+		if(elevenLabsVoice) {
+			targetVoice = elevenLabsVoice;
 		}
 	}
-	speechText = sanitizeSpeechText(speechText);
 	
-	if(!speechText) {
-		return;
+	// check to see it if't one of the uberduck voices
+	if(!targetVoice) {
+		const uberduckVoice = Object.keys(UBERDUCK_VOICES).find(
+			voice => lowerText.startsWith(`${voice}::`)
+		);
+		if(uberduckVoice) {
+			targetVoice = uberduckVoice;
+		}
 	}
+
+	// otherwise it doesn't match any of the voices. User the default
+	if(!targetVoice) {
+		targetVoice = sessionData.tts.voice;
+	} else {
+		speechText = speechText.slice(targetVoice.length + 2);
+	}
+	
+	targetVoice = targetVoice.toLowerCase();
+	speechText = sanitizeSpeechText(speechText);
 	
 	const speechFallbackOrder = [];
 	
-	if(ELEVEN_LABS_VOICE_NAMES.has(targetVoice)) {
+	if(Boolean(UBERDUCK_VOICES[targetVoice])) {
+		speechFallbackOrder.push(fetchUberduckSpeech);
+		speechFallbackOrder.push(fetchBrianSpeech);
+		speechFallbackOrder.push(fetchMicrosoftSpeech);
+		speechFallbackOrder.push(nativeSpeech);
+		speechFallbackOrder.push(fetchElevenLabsSpeech);
+	} else if(ELEVEN_LABS_VOICE_NAMES.has(targetVoice)) {
 		speechFallbackOrder.push(fetchElevenLabsSpeech);
 		speechFallbackOrder.push(fetchBrianSpeech);
 		speechFallbackOrder.push(fetchMicrosoftSpeech);
+		speechFallbackOrder.push(fetchUberduckSpeech);
 		speechFallbackOrder.push(nativeSpeech);
 	} else if(targetVoice === 'brian') {
 		speechFallbackOrder.push(fetchBrianSpeech);
 		speechFallbackOrder.push(fetchMicrosoftSpeech);
-		speechFallbackOrder.push(nativeSpeech);
 		speechFallbackOrder.push(fetchElevenLabsSpeech);
+		speechFallbackOrder.push(fetchUberduckSpeech);
+		speechFallbackOrder.push(nativeSpeech);
 	} else {
 		speechFallbackOrder.push(fetchMicrosoftSpeech);
 		speechFallbackOrder.push(fetchBrianSpeech);
-		speechFallbackOrder.push(nativeSpeech);
 		speechFallbackOrder.push(fetchElevenLabsSpeech);
+		speechFallbackOrder.push(fetchUberduckSpeech);
+		speechFallbackOrder.push(nativeSpeech);
 	}
-	
-	
+
 	let ttsComplete = false,
 		index = 0;
+
+	const availableCredit = await fetchAvailableCredits();
 	
 	while(!ttsComplete) {
 		const speechFn = speechFallbackOrder[index];
 		if(speechFn) {
-			ttsComplete = await speechFn(sessionData, speechText, targetVoice)
+			ttsComplete = await speechFn(sessionData, speechText, targetVoice, availableCredit)
 		} else {
 			ttsComplete = true;
 		}
 		index++;
 	}
+
 };
 
 export const loadElevenLabsVoices = async (sessionData) => {

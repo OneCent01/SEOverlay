@@ -3,11 +3,11 @@ import {
   ADMIN_USERS,
   JOIN_COMMANDS,
   ENABLED_FEATURES,
-  SPEAKER_TEMPLATES,
+  MICROSOFT_SPEAKER_TEMPLATES,
   LOTTERY_BLACKLIST,
 } from '../helpers/consts.js';
 import {speak} from '../helpers/speak.js';
-import {getUsers} from '../helpers/fetch.js';
+import {getUsers, fetchAvailableCredits} from '../helpers/fetch.js';
 import {
   showCounter, 
   hideCounter, 
@@ -55,15 +55,15 @@ export const handleMessageEvent = async (event, sessionData) => {
     handleAdminMessage(text, sessionData);
   }
 
-  speak(sessionData, text, msgId, userId);
-  // if(
-  //   ENABLED_FEATURES.tts &&
-  //   sessionData.tts.isEnabled && 
-  //   tags && 
-  //   tags['custom-reward-id'] && 
-  //   sessionData.tts.eventIds.includes(tags['custom-reward-id'])
-  // ) {
-  // } 
+  if(
+    ENABLED_FEATURES.tts &&
+    sessionData.tts.isEnabled && 
+    tags && 
+    tags['custom-reward-id'] && 
+    sessionData.tts.eventIds.includes(tags['custom-reward-id'])
+  ) {
+    speak(sessionData, text, msgId, userId);
+  } 
 }
 
 /*
@@ -80,23 +80,15 @@ ADMIN WIDGET COMMANDS
 !showDeleteCounter USERNAME
 !hideDeleteCounter USERNAME
 !flashDeleteCounter USERNAME
-
 !makeDeleteCounter USERNAME NICKNAME1,NICKNAME2
-- adds a counter that tracks the number of messages of theirs that have been deleted
-
 !removeDeleteCounter USERNAME/NICKNAME
-- removes a counter that was tracking a given user, if there was one.
 
 -------------------------
 ** USER SELECT LOTTERY **
 
-!runLottery [WINNERS_COUNT]
-- open user lottery and give the numbers of users to select
-
+!runLottery
+!stopLottery
 !play
-- user types this command to join the lottery pool
-- open to all users in chat while a lotto is open
-
 
 ------------------------
 ** TTS **
@@ -106,6 +98,7 @@ ADMIN WIDGET COMMANDS
 !skiptts
 !setVoiceVolume VOLUME
 !updateVoice VOICE
+!ttsSetDelay SECONDS
 */
 
 const handleAdminMessage = (message, sessionData) => {
@@ -154,9 +147,24 @@ const handleAdminMessage = (message, sessionData) => {
     case('!ttsSetDelay'):
       ENABLED_FEATURES.tts && handleSetDelay(sessionData, secondWord);
       break;
+    case('!ttsShowBalance'):
+      ENABLED_FEATURES.tts && handleShowBalance(sessionData);
+      break;
     default:
       break;
   }
+};
+
+const balanceContainer = document.getElementById('available_tts_credit');
+const balanceContainerValue = document.getElementById('available_tts_credit_value');
+
+const handleShowBalance = async (sessionData) => {
+  const availableCredit = await fetchAvailableCredits();
+  balanceContainerValue.innerHTML = availableCredit;
+  balanceContainer.classList.add('visible');
+  setTimeout(() => {
+    balanceContainer.classList.remove('visible')
+  }, 10000)
 };
 
 const handleStopLottery = (sessionData) => {
@@ -178,7 +186,7 @@ const handleSetDelay = (sessionData, delayString) => {
 
 const handleUpdateVoice = (sessionData, voice) => {
   const lowerVoice = voice.toLowerCase();
-  if(Boolean(SPEAKER_TEMPLATES[lowerVoice])) {
+  if(Boolean(MICROSOFT_SPEAKER_TEMPLATES[lowerVoice])) {
     sessionData.tts.voice = lowerVoice;
   }
 };
